@@ -250,12 +250,14 @@ def scrape_urls(urls, driver):
 def main(url):
     driver = open_chrome(url)
     all_links = collect_urls(driver)
+    print("Finished collecting ulrs, collected", len(all_links))
 
     links_df = pd.DataFrame({"links": all_links})
 
     links_df.to_csv("vrbo_links.csv", index=False)
 
     all_data_df = scrape_urls(links_df, driver)
+    print("Finshed collecting all data")
 
     all_data_df.to_csv("all_data.csv", index=False)
 

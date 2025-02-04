@@ -115,6 +115,7 @@ def collect_urls(driver):
 
 def scrape_urls(urls, driver):
     # Define lists
+    urls_list = []
     titels_list = []
     prices_list = []
 
@@ -130,61 +131,105 @@ def scrape_urls(urls, driver):
     popular_amenitie_5_list = []
 
     # first drop un nessacry links
-    urls.drop(columns=[urls.columns[0]], axis=1, inplace=True)
     urls = urls.iloc[9:]
 
-    for index in range(len(urls)):  # Iterate over all links
+    for index in range(10, 20, 1):  # Iterate over all links
         url = urls.iloc[index].values[0]
+        urls_list.append(url)  # Add the url to the data_frame
+
         driver.get(url)
+        time.sleep(3)
 
         title = driver.find_elements(
             By.XPATH, "//*[@class = 'uitk-heading uitk-heading-3']"
         )[0].text
         titels_list.append(title)  # The title of the listing
 
-        price = driver.find_element(By.XPATH, "//*[@class = 'uitk-lockup-price']").text
-        prices_list.append(price)  # The price of the listing
+        try:
+            price = driver.find_element(
+                By.XPATH, "//*[@class = 'uitk-lockup-price']"
+            ).text
+            prices_list.append(price)  # The price of the listing
+        except:
+            prices_list.append(np.nan)  # Error handling
 
         # Items list
-        items = driver.find_elements(
-            By.XPATH,
-            "//*[@class = 'uitk-text uitk-text-spacing-three uitk-type-300 uitk-text-standard-theme uitk-layout-flex-item uitk-layout-flex-item-flex-grow-1']",
-        )
 
-        num_bedrooms = int(items[0].text.split()[0])
-        bedrooms_list.append(num_bedrooms)
+        # First if it has three items
+        try:
+            items = driver.find_elements(
+                By.XPATH,
+                "//*[@class = 'uitk-text uitk-text-spacing-three uitk-type-300 uitk-text-standard-theme uitk-layout-flex-item uitk-layout-flex-item-flex-grow-1']",
+            )
 
-        num_bathrooms = int(items[1].text.split()[0])
-        bathrooms_list.append(num_bathrooms)
+            num_bedrooms = int(items[0].text.split()[0])
+            bedrooms_list.append(num_bedrooms)
 
-        num_sleeps = int(items[2].text.split()[1])
-        sleeps_list.append(num_sleeps)
+            num_bathrooms = int(items[1].text.split()[0])
+            bathrooms_list.append(num_bathrooms)
+
+            num_sleeps = int(items[2].text.split()[1])
+            sleeps_list.append(num_sleeps)
+
+        except:  # If it has threee items
+            items = driver.find_elements(
+                By.XPATH,
+                "//*[@class = 'uitk-text uitk-text-spacing-three uitk-type-300 uitk-text-standard-theme uitk-layout-flex-item uitk-layout-flex-item-flex-basis-half_width uitk-layout-flex-item-flex-grow-1']",
+            )
+
+            try:
+                num_bedrooms = int(items[0].text.split()[0])
+                bedrooms_list.append(num_bedrooms)
+            except:
+                bedrooms_list.append(np.nan)
+
+            try:
+                num_bathrooms = int(items[1].text.split()[0])
+                bathrooms_list.append(num_bathrooms)
+            except:
+                bathrooms_list.append(np.nan)
+
+            try:
+                num_sleeps = int(items[2].text.split()[1])
+                sleeps_list.append(num_sleeps)
+            except:
+                sleeps_list.append(np.nan)
 
         # Popular amenities
-        # All the popular amenities in the listing
-        popular_amenities = driver.find_elements(
-            By.XPATH,
-            "//*[@class = 'uitk-text uitk-type-300 uitk-text-default-theme uitk-layout-flex-item']",
-        )
+        try:
+            # All the popular amenities in the listing
+            popular_amenities = driver.find_elements(
+                By.XPATH,
+                "//*[@class = 'uitk-text uitk-type-300 uitk-text-default-theme uitk-layout-flex-item']",
+            )
 
-        for i in range(6):
-            try:
-                globals()[f"popular_amenitie_{i}"] = popular_amenities[i].text
+            for i in range(6):
+                try:
+                    globals()[f"popular_amenitie_{i}"] = popular_amenities[i].text
 
-            except:  # If there is less than 6 items
-                globals()[f"popular_amenitie_{i}"] = np.nan
+                except:  # If there is less than 6 items
+                    globals()[f"popular_amenitie_{i}"] = np.nan
 
-        # Add them to lists
-        popular_amenitie_0_list.append(popular_amenitie_0)
-        popular_amenitie_1_list.append(popular_amenitie_1)
-        popular_amenitie_2_list.append(popular_amenitie_2)
-        popular_amenitie_3_list.append(popular_amenitie_3)
-        popular_amenitie_4_list.append(popular_amenitie_4)
-        popular_amenitie_5_list.append(popular_amenitie_5)
+            # Add them to lists
+            popular_amenitie_0_list.append(popular_amenitie_0)
+            popular_amenitie_1_list.append(popular_amenitie_1)
+            popular_amenitie_2_list.append(popular_amenitie_2)
+            popular_amenitie_3_list.append(popular_amenitie_3)
+            popular_amenitie_4_list.append(popular_amenitie_4)
+            popular_amenitie_5_list.append(popular_amenitie_5)
+
+        except:  # Error handling if no popular amenities at all
+            popular_amenitie_0_list.append(np.nan)
+            popular_amenitie_1_list.append(np.nan)
+            popular_amenitie_2_list.append(np.nan)
+            popular_amenitie_3_list.append(np.nan)
+            popular_amenitie_4_list.append(np.nan)
+            popular_amenitie_5_list.append(np.nan)
 
     # Create the dataframe
     all_data_df = pd.DataFrame(
         {
+            "urls": urls_list,
             "title": titels_list,
             "prices": prices_list,
             "num_bedrooms": bedrooms_list,

@@ -2,12 +2,9 @@
 import time
 
 import pandas as pd
-import requests
-from bs4 import BeautifulSoup
+import numpy as np
 from selenium.webdriver import Chrome
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 
 url = "https://www.vrbo.com/search?regionId=235&semcid=VRBO-US.B.GOOGLE.BD-c-EN.VR&semdtl=a118921852681.b1145236417018.g1kwd-522436780534.e1c.m1CjwKCAiA74G9BhAEEiwA8kNfpQI3jfqFv5rIIHkaPzgVrlALK5ybAW4IImA5xRUpnmTkYFzWLtfjJxoCygwQAvD_BwE.r12e213678c473a12ebda4545133f2c07ecb5fc68c81df9a7bed9eff41fcdc4ffc.c1ioSXP-1MdtLmUk2KclVEuw.j19073655.k121160.d1639955023346.h1p.i1.l1.n1.o1.p1.q1.s1.t1.x1.f1.u1.v1.w1&gad_source=1&gclid=CjwKCAiA74G9BhAEEiwA8kNfpQI3jfqFv5rIIHkaPzgVrlALK5ybAW4IImA5xRUpnmTkYFzWLtfjJxoCygwQAvD_BwE&destination=North%20Carolina%2C%20United%20States%20of%20America&isInvalidatedDate=false&theme=&userIntent=&adults=2&children=&latLong=35.719758%2C-79.453125&mapBounds=&pwaDialog=&amenities=&sort=RECOMMENDED"
 
@@ -116,6 +113,95 @@ def collect_urls(driver):
     return all_links
 
 
+def scrape_urls(urls, driver):
+    # Define lists
+    titels_list = []
+    prices_list = []
+
+    bedrooms_list = []
+    bathrooms_list = []
+    sleeps_list = []
+
+    popular_amenitie_0_list = []
+    popular_amenitie_1_list = []
+    popular_amenitie_2_list = []
+    popular_amenitie_3_list = []
+    popular_amenitie_4_list = []
+    popular_amenitie_5_list = []
+
+    # first drop un nessacry links
+    urls.drop(columns=[urls.columns[0]], axis=1, inplace=True)
+    urls = urls.iloc[9:]
+
+    for index in range(len(urls)):  # Iterate over all links
+        url = urls.iloc[index].values[0]
+        driver.get(url)
+
+        title = driver.find_elements(
+            By.XPATH, "//*[@class = 'uitk-heading uitk-heading-3']"
+        )[0].text
+        titels_list.append(title)  # The title of the listing
+
+        price = driver.find_element(By.XPATH, "//*[@class = 'uitk-lockup-price']").text
+        prices_list.append(price)  # The price of the listing
+
+        # Items list
+        items = driver.find_elements(
+            By.XPATH,
+            "//*[@class = 'uitk-text uitk-text-spacing-three uitk-type-300 uitk-text-standard-theme uitk-layout-flex-item uitk-layout-flex-item-flex-grow-1']",
+        )
+
+        num_bedrooms = int(items[0].text.split()[0])
+        bedrooms_list.append(num_bedrooms)
+
+        num_bathrooms = int(items[1].text.split()[0])
+        bathrooms_list.append(num_bathrooms)
+
+        num_sleeps = int(items[2].text.split()[1])
+        sleeps_list.append(num_sleeps)
+
+        # Popular amenities
+        # All the popular amenities in the listing
+        popular_amenities = driver.find_elements(
+            By.XPATH,
+            "//*[@class = 'uitk-text uitk-type-300 uitk-text-default-theme uitk-layout-flex-item']",
+        )
+
+        for i in range(6):
+            try:
+                globals()[f"popular_amenitie_{i}"] = popular_amenities[i].text
+
+            except:  # If there is less than 6 items
+                globals()[f"popular_amenitie_{i}"] = np.nan
+
+        # Add them to lists
+        popular_amenitie_0_list.append(popular_amenitie_0)
+        popular_amenitie_1_list.append(popular_amenitie_1)
+        popular_amenitie_2_list.append(popular_amenitie_2)
+        popular_amenitie_3_list.append(popular_amenitie_3)
+        popular_amenitie_4_list.append(popular_amenitie_4)
+        popular_amenitie_5_list.append(popular_amenitie_5)
+
+    # Create the dataframe
+    all_data_df = pd.DataFrame(
+        {
+            "title": titels_list,
+            "prices": prices_list,
+            "num_bedrooms": bedrooms_list,
+            "num_bathrooms": bathrooms_list,
+            "num_sleep": sleeps_list,
+            "popular_amenitie_0": popular_amenitie_0_list,
+            "popular_amenitie_1": popular_amenitie_1_list,
+            "popular_amenitie_2": popular_amenitie_2_list,
+            "popular_amenitie_3": popular_amenitie_3_list,
+            "popular_amenitie_4": popular_amenitie_4_list,
+            "popular_amenitie_5": popular_amenitie_5_list,
+        }
+    )
+
+    return all_data_df
+
+
 def main(url):
     driver = open_chrome(url)
     all_links = collect_urls(driver)
@@ -124,4 +210,8 @@ def main(url):
 
     links_df.to_csv("vrbo_links.csv", index=False)
 
-    return all_links
+    all_data_df = scrape_urls(links_df, driver)
+
+    all_data_df.to_csv("all_data.csv", index=False)
+
+    return all_data_df

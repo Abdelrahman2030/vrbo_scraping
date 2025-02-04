@@ -122,20 +122,24 @@ def scrape_urls(urls, driver):
     popular_amenitie_5_list = []
 
     # first drop un nessacry links
-    urls = urls.iloc[9:]
+    url_num = 1
 
-    for index in range(10, 20, 1):  # Iterate over all links
+    for index in range(122, len(urls)):  # Iterate over all links
         url = urls.iloc[index].values[0]
         urls_list.append(url)  # Add the url to the data_frame
 
         driver.get(url)
         time.sleep(3)
 
-        title = driver.find_elements(
-            By.XPATH, "//*[@class = 'uitk-heading uitk-heading-3']"
-        )[0].text
-        titels_list.append(title)  # The title of the listing
-
+        try:
+            title = driver.find_elements(
+                By.XPATH, "//*[@class = 'uitk-heading uitk-heading-3']"
+            )[0].text
+            titels_list.append(title)  # The title of the listing
+            print(f"Scraped page number {index}")
+        except:
+            titels_list.append(np.nan)
+            print(f"Falied to scrape page number {index}")
         try:
             price = driver.find_element(
                 By.XPATH, "//*[@class = 'uitk-lockup-price']"
@@ -145,46 +149,58 @@ def scrape_urls(urls, driver):
             prices_list.append(np.nan)  # Error handling
 
         # Items list
+        items_3 = driver.find_elements(
+            By.XPATH,
+            "//*[@class = 'uitk-text uitk-text-spacing-three uitk-type-300 uitk-text-standard-theme uitk-layout-flex-item uitk-layout-flex-item-flex-grow-1']",
+        )
 
-        # First if it has three items
-        try:
-            items = driver.find_elements(
-                By.XPATH,
-                "//*[@class = 'uitk-text uitk-text-spacing-three uitk-type-300 uitk-text-standard-theme uitk-layout-flex-item uitk-layout-flex-item-flex-grow-1']",
-            )
+        items_4 = driver.find_elements(
+            By.XPATH,
+            "//*[@class = 'uitk-text uitk-text-spacing-three uitk-type-300 uitk-text-standard-theme uitk-layout-flex-item uitk-layout-flex-item-flex-basis-half_width uitk-layout-flex-item-flex-grow-1']",
+        )
 
-            num_bedrooms = int(items[0].text.split()[0])
-            bedrooms_list.append(num_bedrooms)
-
-            num_bathrooms = int(items[1].text.split()[0])
-            bathrooms_list.append(num_bathrooms)
-
-            num_sleeps = int(items[2].text.split()[1])
-            sleeps_list.append(num_sleeps)
-
-        except:  # If it has threee items
-            items = driver.find_elements(
-                By.XPATH,
-                "//*[@class = 'uitk-text uitk-text-spacing-three uitk-type-300 uitk-text-standard-theme uitk-layout-flex-item uitk-layout-flex-item-flex-basis-half_width uitk-layout-flex-item-flex-grow-1']",
-            )
-
+        if len(items_3) > 0:  # First if it has three items
             try:
-                num_bedrooms = int(items[0].text.split()[0])
+                num_bedrooms = int(items_3[0].text.split()[0])
                 bedrooms_list.append(num_bedrooms)
             except:
                 bedrooms_list.append(np.nan)
 
             try:
-                num_bathrooms = int(items[1].text.split()[0])
+                num_bathrooms = int(items_3[1].text.split()[0])
                 bathrooms_list.append(num_bathrooms)
             except:
                 bathrooms_list.append(np.nan)
 
             try:
-                num_sleeps = int(items[2].text.split()[1])
+                num_sleeps = int(items_3[2].text.split()[1])
                 sleeps_list.append(num_sleeps)
             except:
                 sleeps_list.append(np.nan)
+
+        elif len(items_4) > 0:
+            try:
+                num_bedrooms = int(items_4[0].text.split()[0])
+                bedrooms_list.append(num_bedrooms)
+            except:
+                bedrooms_list.append(np.nan)
+
+            try:
+                num_bathrooms = int(items_4[1].text.split()[0])
+                bathrooms_list.append(num_bathrooms)
+            except:
+                bathrooms_list.append(np.nan)
+
+            try:
+                num_sleeps = int(items_4[2].text.split()[1])
+                sleeps_list.append(num_sleeps)
+            except:
+                sleeps_list.append(np.nan)
+
+        else:
+            bedrooms_list.append(np.nan)
+            bathrooms_list.append(np.nan)
+            sleeps_list.append(np.nan)
 
         # Popular amenities
         try:

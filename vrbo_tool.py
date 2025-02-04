@@ -122,6 +122,6 @@ def main(url):
 
     links_df = pd.DataFrame({"links": all_links})
 
-    links_df.to_csv("vrbo_links.csv")
+    links_df.to_csv("vrbo_links.csv", index=False)
 
     return all_links

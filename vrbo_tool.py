@@ -64,7 +64,7 @@ def collect_urls(driver):
     page_num = 1  # Print pages
 
     # for loop to itirate over pages
-    while len(all_links) == len(set(all_links)):
+    while len(set(all_links)) <= len(all_links) + 49:
         time.sleep(5)  # Till the new page loads
         for index in range(4):  # 4 steps: 25%, 50%, 75%, 100%
             scroll_height = driver.execute_script(

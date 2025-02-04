@@ -109,6 +109,7 @@ def collect_urls(driver):
         len_final_message = len(final_message)
 
         print("This is the page number: ", page_num)
+        page_num = page_num + 1
 
     return all_links
 

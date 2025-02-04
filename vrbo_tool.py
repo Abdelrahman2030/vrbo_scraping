@@ -61,12 +61,10 @@ def collect_urls(driver):
         "//*[@class = 'uitk-layout-grid-item scrollable-result-section uitk-scrollable uitk-scrollable-vertical']",
     )
 
-    len_final_message = 0  # The ending factor
-
     page_num = 1  # Print pages
 
     # for loop to itirate over pages
-    while len_final_message == 0:
+    while len(all_links) == len(set(all_links)):
         time.sleep(5)  # Till the new page loads
         for index in range(4):  # 4 steps: 25%, 50%, 75%, 100%
             scroll_height = driver.execute_script(
@@ -99,14 +97,6 @@ def collect_urls(driver):
         driver.execute_script(
             "arguments[0].click();", next_button[0]
         )  # Clicks the next button
-
-        # End loop factor is the appearing of final message
-        final_message = driver.find_elements(
-            By.XPATH,
-            '//h3[text()="We don\'t have any more properties that match your search criteria"]',
-        )
-
-        len_final_message = len(final_message)
 
         print("This is the page number: ", page_num)
         page_num = page_num + 1
